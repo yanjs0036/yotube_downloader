@@ -53,7 +53,7 @@ def download_audio(url, filename, timeout=8):
         "cookiefile": COOKIES_PATH,
         "quiet": False,
         "verbose": True,
-        "proxy": "http://103.145.151.242:8080",  # 新代理
+        "proxy": "http://154.202.121.180:3128",  # 新代理
     }
     result = {"success": False}
     def run_download():
