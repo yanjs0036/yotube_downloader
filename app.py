@@ -21,6 +21,17 @@ def ensure_cookies():
     else:
         print("警告：原始 cookies.txt 不存在")
 
+def check_video(video_id):
+    try:
+        youtube = build("youtube", "v3", developerKey=API_KEY)
+        request = youtube.videos().list(part="snippet", id=video_id)
+        response = request.execute()
+        print(f"API 檢查結果: {response.get('items', [])}")
+        return bool(response.get("items", []))
+    except Exception as e:
+        print(f"API 檢查失敗: {e}")
+        return False
+
 def download_audio(url, filename):
     ensure_cookies()
     if not os.path.exists(COOKIES_PATH):
