@@ -6,10 +6,8 @@ import threading
 
 app = Flask(__name__)
 
-# 你的 API Key
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
 
-# 用 API 檢查影片資訊
 def check_video(video_id):
     try:
         youtube = build("youtube", "v3", developerKey=API_KEY)
@@ -21,7 +19,6 @@ def check_video(video_id):
         print(f"API 檢查失敗: {e}")
         return False
 
-# 下載音訊的函數
 def download_audio(url, filename):
     ydl_opts = {
         "format": "bestaudio/best",
@@ -40,7 +37,6 @@ def download_audio(url, filename):
     except Exception as e:
         print(f"下載失敗: {e}")
 
-# 主頁面
 @app.route("/")
 def home():
     return """
@@ -50,7 +46,6 @@ def home():
     </form>
     """
 
-# 下載路由
 @app.route("/download", methods=["POST"])
 def download():
     url = request.form.get("url", "")
@@ -81,10 +76,10 @@ def download():
     print("啟動下載執行緒")
     thread = threading.Thread(target=download_audio, args=(url, filename))
     thread.start()
+    print("執行緒已啟動，等待下載")
 
     return f"正在下載，請稍後訪問 /result/{filename}"
 
-# 結果路由
 @app.route("/result/<filename>")
 def result(filename):
     filepath = f"/tmp/{filename}.mp3"
@@ -93,6 +88,10 @@ def result(filename):
         return send_file(filepath, as_attachment=True)
     print(f"檔案還沒準備好: {filepath}")
     return "還在下載中，請再等幾秒！"
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
