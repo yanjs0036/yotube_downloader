@@ -7,15 +7,17 @@ import shutil
 app = Flask(__name__)
 
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
-COOKIES_SRC = "/var/task/cookies.txt"  # 原始檔案（唯讀）
-COOKIES_PATH = "/tmp/cookies.txt"      # 可寫路徑
+COOKIES_SRC = "/var/task/cookies.txt"
+COOKIES_PATH = "/tmp/cookies.txt"
 
-# 啟動時複製 cookies 到 /tmp
-if os.path.exists(COOKIES_SRC) and not os.path.exists(COOKIES_PATH):
-    shutil.copy(COOKIES_SRC, COOKIES_PATH)
-    print(f"已複製 cookies.txt 到 {COOKIES_PATH}")
-elif not os.path.exists(COOKIES_SRC):
-    print("警告：原始 cookies.txt 不存在")
+def ensure_cookies():
+    if os.path.exists(COOKIES_SRC):
+        shutil.copy(COOKIES_SRC, COOKIES_PATH)
+        print(f"已複製 cookies.txt 到 {COOKIES_PATH}")
+        with open(COOKIES_PATH, 'r') as f:
+            print(f"Cookies 內容預覽: {f.read()[:200]}")  # 印前200字元驗證
+    else:
+        print("警告：原始 cookies.txt 不存在")
 
 def check_video(video_id):
     try:
@@ -29,6 +31,7 @@ def check_video(video_id):
         return False
 
 def download_audio(url, filename):
+    ensure_cookies()
     if not os.path.exists(COOKIES_PATH):
         print(f"錯誤：找不到 {COOKIES_PATH}")
     else:
@@ -42,6 +45,7 @@ def download_audio(url, filename):
         }],
         "cookiefile": COOKIES_PATH,
         "quiet": False,
+        "verbose": True,
     }
     try:
         print(f"開始下載: {url}")
