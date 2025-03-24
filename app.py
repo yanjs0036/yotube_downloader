@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file
 import yt_dlp
 from googleapiclient.discovery import build
 import os
@@ -6,7 +6,7 @@ import threading
 
 app = Flask(__name__)
 
-# 你的 API Key
+# 你的 API Key（確認是你自己的）
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
 
 # 用 API 檢查影片資訊
@@ -15,7 +15,7 @@ def check_video(video_id):
         youtube = build("youtube", "v3", developerKey=API_KEY)
         request = youtube.videos().list(part="snippet", id=video_id)
         response = request.execute()
-        return bool(response["items"])
+        return bool(response.get("items", []))
     except Exception as e:
         return False
 
@@ -49,14 +49,24 @@ def home():
 # 下載路由
 @app.route("/download", methods=["POST"])
 def download():
-    url = request.form["url"]
+    url = request.form.get("url", "")
+    if not url:
+        return "請輸入 YouTube 連結！"
+
+    # 提取影片 ID
+    video_id = None
     try:
-        video_id = url.split("v=")[1].split("&")[0]
+        if "v=" in url:
+            video_id = url.split("v=")[1].split("&")[0]
+        elif "youtu.be/" in url:
+            video_id = url.split("youtu.be/")[1].split("?")[0]
+        else:
+            return "連結格式不對，請用 YouTube 完整網址！"
     except IndexError:
-        return "連結格式錯誤，請用 YouTube 網址！"
+        return "無法解析連結，請檢查格式！"
 
     if not check_video(video_id):
-        return "影片無效，請檢查連結！"
+        return "影片無效或不存在，請檢查連結！"
 
     filename = f"audio_{video_id}"
     filepath = f"/tmp/{filename}.mp3"
@@ -64,6 +74,7 @@ def download():
     if os.path.exists(filepath):
         return send_file(filepath, as_attachment=True)
 
+    # 後台下載
     thread = threading.Thread(target=download_audio, args=(url, filename))
     thread.start()
 
