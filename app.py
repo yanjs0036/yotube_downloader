@@ -12,10 +12,13 @@ COOKIES_PATH = "/tmp/cookies.txt"
 
 def ensure_cookies():
     if os.path.exists(COOKIES_SRC):
-        shutil.copy(COOKIES_SRC, COOKIES_PATH)
+        # 用二進位模式複製，避開編碼問題
+        with open(COOKIES_SRC, 'rb') as src, open(COOKIES_PATH, 'wb') as dst:
+            shutil.copyfileobj(src, dst)
         print(f"已複製 cookies.txt 到 {COOKIES_PATH}")
-        with open(COOKIES_PATH, 'r') as f:
-            print(f"Cookies 內容預覽: {f.read()[:200]}")  # 印前200字元驗證
+        with open(COOKIES_PATH, 'r', encoding='utf-8') as f:
+            content = f.read()
+            print(f"完整 Cookies 內容 (長度 {len(content)}):\n{content}")
     else:
         print("警告：原始 cookies.txt 不存在")
 
