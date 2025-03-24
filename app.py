@@ -6,7 +6,7 @@ import threading
 
 app = Flask(__name__)
 
-# 你的 API Key（確認是你自己的）
+# 你的 API Key
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
 
 # 用 API 檢查影片資訊
@@ -15,8 +15,10 @@ def check_video(video_id):
         youtube = build("youtube", "v3", developerKey=API_KEY)
         request = youtube.videos().list(part="snippet", id=video_id)
         response = request.execute()
+        print(f"API 檢查結果: {response.get('items', [])}")
         return bool(response.get("items", []))
     except Exception as e:
+        print(f"API 檢查失敗: {e}")
         return False
 
 # 下載音訊的函數
@@ -31,8 +33,10 @@ def download_audio(url, filename):
         "quiet": True,
     }
     try:
+        print(f"開始下載: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
+        print(f"下載完成: /tmp/{filename}.mp3")
     except Exception as e:
         print(f"下載失敗: {e}")
 
@@ -53,8 +57,6 @@ def download():
     if not url:
         return "請輸入 YouTube 連結！"
 
-    # 提取影片 ID
-    video_id = None
     try:
         if "v=" in url:
             video_id = url.split("v=")[1].split("&")[0]
@@ -65,6 +67,7 @@ def download():
     except IndexError:
         return "無法解析連結，請檢查格式！"
 
+    print(f"解析到 video_id: {video_id}")
     if not check_video(video_id):
         return "影片無效或不存在，請檢查連結！"
 
@@ -72,9 +75,10 @@ def download():
     filepath = f"/tmp/{filename}.mp3"
 
     if os.path.exists(filepath):
+        print(f"檔案已存在: {filepath}")
         return send_file(filepath, as_attachment=True)
 
-    # 後台下載
+    print("啟動下載執行緒")
     thread = threading.Thread(target=download_audio, args=(url, filename))
     thread.start()
 
@@ -85,7 +89,9 @@ def download():
 def result(filename):
     filepath = f"/tmp/{filename}.mp3"
     if os.path.exists(filepath):
+        print(f"傳回檔案: {filepath}")
         return send_file(filepath, as_attachment=True)
+    print(f"檔案還沒準備好: {filepath}")
     return "還在下載中，請再等幾秒！"
 
 if __name__ == "__main__":
