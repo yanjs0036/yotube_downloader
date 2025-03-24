@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
-COOKIES_PATH = "/tmp/cookies.txt"  # Vercel 可寫路徑
+COOKIES_PATH = "/var/task/cookies.txt"  # Vercel 根目錄
 
 def check_video(video_id):
     try:
