@@ -65,7 +65,7 @@ def download_audio(url, filename):
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
         },
-        "proxy": "http://139.99.237.62:80",  # 免費代理，測試用
+        "proxy": "http://103.174.102.31:80",  # 新免費代理
     }
     try:
         print(f"開始下載: {url}")
