@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
-COOKIES_PATH = "/tmp/cookies.txt"  # Vercel 的臨時路徑
+COOKIES_PATH = "cookies.txt"  # 相對路徑
 
 def check_video(video_id):
     try:
@@ -20,6 +20,10 @@ def check_video(video_id):
         return False
 
 def download_audio(url, filename):
+    if not os.path.exists(COOKIES_PATH):
+        print(f"錯誤：找不到 {COOKIES_PATH} 在 {os.getcwd()}")
+    else:
+        print(f"找到 cookies.txt 在 {os.path.abspath(COOKIES_PATH)}")
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": f"/tmp/{filename}.%(ext)s",
@@ -27,8 +31,9 @@ def download_audio(url, filename):
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
         }],
-        "cookiefile": COOKIES_PATH,  # 用動態路徑
+        "cookiefile": COOKIES_PATH,
         "quiet": False,
+        "verbose": True,  # 顯示 yt-dlp 詳細過程
     }
     try:
         print(f"開始下載: {url}")
@@ -47,7 +52,6 @@ def home():
         <input type="text" name="url" placeholder="貼上 YouTube 連結">
         <input type="submit" value="下載音訊">
     </form>
-    <p><a href="/update-cookies">更新 Cookies（管理員用）</a></p>
     """
 
 @app.route("/download", methods=["POST"])
@@ -83,22 +87,6 @@ def download():
             return send_file(filepath, as_attachment=True)
         return "下載完成但檔案沒找到，請稍後再試！"
     return "下載失敗，請檢查日誌！"
-
-@app.route("/update-cookies", methods=["GET", "POST"])
-def update_cookies():
-    if request.method == "POST":
-        if "cookies" not in request.files:
-            return "請上傳 cookies 檔案！"
-        cookies_file = request.files["cookies"]
-        cookies_file.save(COOKIES_PATH)
-        print("Cookies 已更新")
-        return "Cookies 更新成功！<a href='/'>回首頁</a>"
-    return """
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="cookies" accept=".txt">
-        <input type="submit" value="上傳 Cookies">
-    </form>
-    """
 
 @app.route("/favicon.ico")
 def favicon():
