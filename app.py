@@ -2,11 +2,20 @@ from flask import Flask, request, send_file
 import yt_dlp
 from googleapiclient.discovery import build
 import os
+import shutil
 
 app = Flask(__name__)
 
 API_KEY = "AIzaSyCW0J6xcz3Get8fQzHfeH5MBYNtr4ZBAxE"
-COOKIES_PATH = "/var/task/cookies.txt"  # Vercel 根目錄
+COOKIES_SRC = "/var/task/cookies.txt"  # 原始檔案（唯讀）
+COOKIES_PATH = "/tmp/cookies.txt"      # 可寫路徑
+
+# 啟動時複製 cookies 到 /tmp
+if os.path.exists(COOKIES_SRC) and not os.path.exists(COOKIES_PATH):
+    shutil.copy(COOKIES_SRC, COOKIES_PATH)
+    print(f"已複製 cookies.txt 到 {COOKIES_PATH}")
+elif not os.path.exists(COOKIES_SRC):
+    print("警告：原始 cookies.txt 不存在")
 
 def check_video(video_id):
     try:
