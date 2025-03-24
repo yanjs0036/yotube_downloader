@@ -2,7 +2,6 @@ from flask import Flask, request, send_file
 import yt_dlp
 from googleapiclient.discovery import build
 import os
-import threading
 
 app = Flask(__name__)
 
@@ -27,6 +26,7 @@ def download_audio(url, filename):
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
         }],
+        #"cookiefile": "cookies.txt",  # 之後加 cookies 時取消註解
         "quiet": True,
     }
     try:
@@ -34,8 +34,10 @@ def download_audio(url, filename):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
         print(f"下載完成: /tmp/{filename}.mp3")
+        return True
     except Exception as e:
         print(f"下載失敗: {e}")
+        return False
 
 @app.route("/")
 def home():
@@ -73,21 +75,13 @@ def download():
         print(f"檔案已存在: {filepath}")
         return send_file(filepath, as_attachment=True)
 
-    print("啟動下載執行緒")
-    thread = threading.Thread(target=download_audio, args=(url, filename))
-    thread.start()
-    print("執行緒已啟動，等待下載")
-
-    return f"正在下載，請稍後訪問 /result/{filename}"
-
-@app.route("/result/<filename>")
-def result(filename):
-    filepath = f"/tmp/{filename}.mp3"
-    if os.path.exists(filepath):
-        print(f"傳回檔案: {filepath}")
-        return send_file(filepath, as_attachment=True)
-    print(f"檔案還沒準備好: {filepath}")
-    return "還在下載中，請再等幾秒！"
+    # 直接下載，不用執行緒
+    if download_audio(url, filename):
+        if os.path.exists(filepath):
+            print(f"傳回檔案: {filepath}")
+            return send_file(filepath, as_attachment=True)
+        return "下載完成但檔案沒找到，請稍後再試！"
+    return "下載失敗，請檢查日誌！"
 
 @app.route("/favicon.ico")
 def favicon():
